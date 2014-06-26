@@ -1,9 +1,24 @@
-;this doesn't work yet. It clips of the first item of the sequence
-(fn longest-subsequence
-  [v]
-  (let [deltas (concat [1] (map - (rest v) v))
-        deltas-with-index (map-indexed vector deltas)
-        increasing-sequences (partition-by #(> (last %) 0) deltas-with-index)
-        longest-sequence (last (sort-by count increasing-sequences))
-        start-index (ffirst longest-sequence)]
-    (subvec v start-index (+ start-index (count longest-sequence)))))
+(ns p53
+  (:use clojure.test))
+
+(defn f [s]
+  (letfn [(incr [acc s]
+            (if (and (seq s) (> (first s) (last acc)))
+              (recur (conj acc (first s)) (rest s))
+              acc))
+          (increasing [[h & r]] (incr [h] r))
+          (increasing-subseqs [s]
+            (if (seq s)
+              (let [t (increasing s)]
+                (cons t (increasing-subseqs (drop (count t) s))))
+              []))]
+    (let [t (increasing-subseqs s)
+          max-count (max 2 (apply max (map count t)))]
+      (or (first (filter #(= max-count (count %)) 
+                         t)) 
+          []))))
+
+(deftest example-1
+  (is (= (f [1 0 1 2 3 0 4 5]) [0 1 2 3])))
+
+(run-all-tests)
